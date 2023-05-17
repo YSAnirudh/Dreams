@@ -19,6 +19,7 @@ ADreamCharacter::ADreamCharacter(const FObjectInitializer& ObjectInitializer)
 
 	// Cast Base Character Movement Component to Our Custom CMC
 	DreamCharacterMovementComponent = Cast<UDreamCharacterMovementComponent>(GetCharacterMovement());
+	DreamCharacterMovementComponent->SetIsReplicated(true);
 	
 	// Character Movement settings
 	GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -58,7 +59,7 @@ void ADreamCharacter::BeginPlay()
 void ADreamCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	UE_LOG(LogTemp, Warning, TEXT("%f"), DreamCharacterMovementComponent->MaxWalkSpeed);
+	//UE_LOG(LogTemp, Warning, TEXT("%f"), DreamCharacterMovementComponent->MaxWalkSpeed);
 }
 
 // Called to bind functionality to input
@@ -113,6 +114,13 @@ void ADreamCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 				Input->BindAction(BaseInputActionsConfig->CrouchAction, ETriggerEvent::Triggered, this, &ADreamCharacter::StartCrouch);
 				Input->BindAction(BaseInputActionsConfig->CrouchAction, ETriggerEvent::Completed, this, &ADreamCharacter::StopCrouch);
 			}
+		}
+
+		// Bind Sprint Action
+		if (BaseInputActionsConfig->DashAction)
+		{
+			Input->BindAction(BaseInputActionsConfig->DashAction, ETriggerEvent::Triggered, this, &ADreamCharacter::Dash);
+			Input->BindAction(BaseInputActionsConfig->DashAction, ETriggerEvent::Completed, this, &ADreamCharacter::StopDash);
 		}
 	}
 }
@@ -210,5 +218,15 @@ void ADreamCharacter::StartCrouch(const FInputActionValue& ActionValue)
 void ADreamCharacter::StopCrouch(const FInputActionValue& ActionValue)
 {
 	DreamCharacterMovementComponent->CrouchReleased();
+}
+
+void ADreamCharacter::Dash(const FInputActionValue& ActionValue)
+{
+	DreamCharacterMovementComponent->DashPressed();
+}
+
+void ADreamCharacter::StopDash(const FInputActionValue& ActionValue)
+{
+	DreamCharacterMovementComponent->DashReleased();
 }
 

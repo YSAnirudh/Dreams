@@ -34,16 +34,21 @@ public:
 	// Look Input - Mouse Move/Right Stick
 	UFUNCTION(BlueprintCallable)
 	void Look(const FInputActionValue& ActionValue);
-	// Sprint Input - Shift/RT
+	// Sprint Input - L Shift/RT
 	UFUNCTION(BlueprintCallable)
 	void Sprint(const FInputActionValue& ActionValue);
 	UFUNCTION(BlueprintCallable)
 	void StopSprint(const FInputActionValue& ActionValue);
-	// Crouch Input - Shift/RT
+	// Crouch Input - C/LB
 	UFUNCTION(BlueprintCallable)
 	void StartCrouch(const FInputActionValue& ActionValue);
 	UFUNCTION(BlueprintCallable)
 	void StopCrouch(const FInputActionValue& ActionValue);
+	// Dash Input - L Alt
+	UFUNCTION(BlueprintCallable)
+	void Dash(const FInputActionValue& ActionValue);
+	UFUNCTION(BlueprintCallable)
+	void StopDash(const FInputActionValue& ActionValue);
 
 	// INLINE FUNCTIONS
 	// Get Camera Boom Spring Arm

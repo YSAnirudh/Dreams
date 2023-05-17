@@ -36,4 +36,8 @@ public:
 	// Crouch
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Actions")
 	TObjectPtr<UInputAction> CrouchAction;
+	
+	// Dash
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input|Actions")
+	TObjectPtr<UInputAction> DashAction;
 };
