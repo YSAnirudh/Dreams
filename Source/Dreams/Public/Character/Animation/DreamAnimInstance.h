@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "Character/WriterCharacter.h"
+#include "Character/DreamCharacter.h"
 #include "DreamAnimInstance.generated.h"
 
 /**
@@ -37,7 +37,7 @@ private:
 	// --- VARIABLES ---
 	// Reference of the BP_WriterCharacter to access data to update animations
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Character", meta=(AllowPrivateAccess = "true"))
-	TObjectPtr<AWriterCharacter> WriterCharacterRef = nullptr;
+	TObjectPtr<ADreamCharacter> DreamCharacterRef = nullptr;
 
 	// GROUND LOCOMOTION
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Ground Movement", meta=(AllowPrivateAccess = "true"))
@@ -51,4 +51,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Ground Movement", meta=(AllowPrivateAccess = "true"))
 	bool bIsJogging = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Ground Movement", meta=(AllowPrivateAccess = "true"))
+	bool bIsSprinting = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation|Ground Movement", meta=(AllowPrivateAccess = "true"))
+	bool bIsCrouching = false;
 };

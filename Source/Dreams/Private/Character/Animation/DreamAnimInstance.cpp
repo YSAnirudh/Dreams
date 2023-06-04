@@ -3,6 +3,7 @@
 
 #include "Character/Animation/DreamAnimInstance.h"
 
+#include "Character/Movement/DreamCharacterMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UDreamAnimInstance::UDreamAnimInstance()
@@ -13,22 +14,32 @@ void UDreamAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
-	// Get Writer Character Reference
-	if (!WriterCharacterRef)
+	// Get Dream Character Reference
+	if (!DreamCharacterRef)
 	{
-		WriterCharacterRef = Cast<AWriterCharacter>(TryGetPawnOwner());
+		DreamCharacterRef = Cast<ADreamCharacter>(TryGetPawnOwner());
 	}
 }
 
 void UDreamAnimInstance::UpdateAnimationProperties(float DeltaSeconds)
 {
-	// Get Writer Character Reference, if NULL
-	if (!WriterCharacterRef)
+	// Get Dream Character Reference, if NULL
+	if (!DreamCharacterRef)
 	{
-		WriterCharacterRef = Cast<AWriterCharacter>(TryGetPawnOwner());
-		if (!WriterCharacterRef)
+		DreamCharacterRef = Cast<ADreamCharacter>(TryGetPawnOwner());
+	}
+	if (DreamCharacterRef)
+	{
+	    Speed = DreamCharacterRef->GetVelocity().Size();
+
+		bIsJogging = DreamCharacterRef->bIsJogging;
+		bIsCrouching = DreamCharacterRef->bIsCrouched;
+		bIsSprinting = DreamCharacterRef->bIsSprinting;
+		bIsWalking = DreamCharacterRef->bIsWalking;
+		
+		if (DreamCharacterRef && DreamCharacterRef->GetDreamCharacterMovement())
 		{
-			return;
+			//bIsInAir = DreamCharacterRef->GetDreamCharacterMovement()->IsFalling();
 		}
 	}
 }

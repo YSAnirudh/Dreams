@@ -60,7 +60,108 @@ void ADreamCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), DreamCharacterMovementComponent->MaxWalkSpeed);
+
+	if (!DreamCharacterMovementComponent)
+	{
+		return;
+	}
+	//FindInteractableObjectsWithinRadius();
+	if (DreamCharacterMovementComponent && DreamCharacterMovementComponent->IsClimbing())
+	{
+		bUseControllerRotationYaw = false;
+	} else
+	{
+		bUseControllerRotationYaw = true;
+	}
+
+	//UE_LOG(LogTemp, Warning, TEXT("Accel: %s"), *DreamCharacterMovementComponent->GetCurrentAcceleration().GetSafeNormal().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Velo: %s"), *DreamCharacterMovementComponent->Velocity.GetSafeNormal().ToString());
+	
 }
+
+#pragma region Interaction
+void ADreamCharacter::FindInteractable()
+{
+	FindInteractableObjectsWithinRadius();
+	FHitResult Hit;
+	const FVector CameraForward = GetFollowCamera()->GetForwardVector();
+	const FVector Start = GetFollowCamera()->GetComponentLocation();
+	const FVector End = Start + CameraForward * InteractionRange;
+
+	bool bFoundActors = UKismetSystemLibrary::SphereTraceSingleByProfile(
+		GetWorld(),
+		Start,
+		End,
+		50.f,
+		TEXT("BlockAll"),
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::Persistent,
+		Hit,
+		true
+	);
+
+	if (bFoundActors)
+	{
+		if (Hit.bBlockingHit)
+		{
+			AInteractable* Interactable = Cast<AInteractable>(Hit.GetActor());
+			if (Interactable && Interactable->GetIsWithinRadius())
+			{
+				if (CharacterFacingInteractable(Interactable->GetActorLocation()))
+				{
+					
+				}
+				//UE_LOG(LogTemp, Warning, TEXT("%s"), *Hit.GetActor()->GetName());
+			}
+		}
+	}
+}
+
+void ADreamCharacter::FindInteractableObjectsWithinRadius() const
+{
+	TArray<FHitResult> CheckInteractHits;
+
+	bool bFoundActors = UKismetSystemLibrary::SphereTraceMultiByProfile(
+		GetWorld(),
+		GetActorLocation(),
+		GetActorLocation(),
+		InteractionRadius,
+		TEXT("BlockAll"),
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::ForOneFrame,
+		CheckInteractHits,
+		true
+	);
+
+	if (bFoundActors)
+	{
+		for (FHitResult Hit : CheckInteractHits)
+		{
+			if (Hit.bBlockingHit)
+			{
+				AInteractable* Interactable = Cast<AInteractable>(Hit.GetActor());
+				if (Interactable)
+				{
+					Interactable->SetIsWithinRadius(true);
+					//UE_LOG(LogTemp, Warning, TEXT("%s"), *Hit.GetActor()->GetName());
+				}
+			}
+		}
+	}
+}
+
+bool ADreamCharacter::CharacterFacingInteractable(FVector InteractableLocation) const 
+{
+	float DotSimilarity = FVector::DotProduct(GetActorLocation(), InteractableLocation);
+	if (DotSimilarity > 0.75f)
+	{
+		return true;
+	}
+	return false;
+}
+#pragma endregion 
 
 // Called to bind functionality to input
 void ADreamCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -116,7 +217,21 @@ void ADreamCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 			}
 		}
 
-		// Bind Sprint Action
+		// Bind Walk Action
+		if (BaseInputActionsConfig->WalkAction)
+		{
+			if (bWalkToggle)
+			{
+				Input->BindAction(BaseInputActionsConfig->WalkAction, ETriggerEvent::Completed, this, &ADreamCharacter::StartWalk);
+			}
+			else
+			{
+				Input->BindAction(BaseInputActionsConfig->WalkAction, ETriggerEvent::Triggered, this, &ADreamCharacter::StartWalk);
+				Input->BindAction(BaseInputActionsConfig->WalkAction, ETriggerEvent::Completed, this, &ADreamCharacter::StopWalk);
+			}
+		}
+
+		// Bind Dash Action
 		if (BaseInputActionsConfig->DashAction)
 		{
 			Input->BindAction(BaseInputActionsConfig->DashAction, ETriggerEvent::Triggered, this, &ADreamCharacter::Dash);
@@ -125,6 +240,7 @@ void ADreamCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	}
 }
 
+#pragma region Input
 // Add the required Input Mapping Contexts to handle enhanced input
 void ADreamCharacter::AddMappingContexts()
 {
@@ -170,6 +286,22 @@ void ADreamCharacter::Look(const FInputActionValue& ActionValue)
 	{
 		AddControllerPitchInput(InputVector.Y * MouseSensitivityY);
 	}
+}
+
+// Jump Input
+void ADreamCharacter::Jump()
+{
+	Super::Jump();
+
+	bPressedDreamJump = true;
+	bPressedJump = false;
+}
+
+void ADreamCharacter::StopJumping()
+{
+	Super::StopJumping();
+
+	bPressedDreamJump = false;
 }
 
 void ADreamCharacter::Sprint(const FInputActionValue& ActionValue)
@@ -220,6 +352,30 @@ void ADreamCharacter::StopCrouch(const FInputActionValue& ActionValue)
 	DreamCharacterMovementComponent->CrouchReleased();
 }
 
+void ADreamCharacter::StartWalk(const FInputActionValue& ActionValue)
+{
+	if (!bWalkToggle)
+	{
+		DreamCharacterMovementComponent->WalkPressed();
+	}
+	else
+	{
+		if (DreamCharacterMovementComponent->GetWantsToWalk())
+		{
+			DreamCharacterMovementComponent->WalkReleased();
+		}
+		else
+		{
+			DreamCharacterMovementComponent->WalkPressed();
+		}
+	}
+}
+
+void ADreamCharacter::StopWalk(const FInputActionValue& ActionValue)
+{
+	DreamCharacterMovementComponent->WalkReleased();
+}
+
 void ADreamCharacter::Dash(const FInputActionValue& ActionValue)
 {
 	DreamCharacterMovementComponent->DashPressed();
@@ -228,5 +384,18 @@ void ADreamCharacter::Dash(const FInputActionValue& ActionValue)
 void ADreamCharacter::StopDash(const FInputActionValue& ActionValue)
 {
 	DreamCharacterMovementComponent->DashReleased();
+}
+#pragma endregion 
+
+FCollisionQueryParams ADreamCharacter::GetIgnoreCharacterParams() const
+{
+	FCollisionQueryParams Params;
+
+	TArray<AActor*> CharacterChildren;
+	GetAllChildActors(CharacterChildren);
+	Params.AddIgnoredActors(CharacterChildren);
+	Params.AddIgnoredActor(this);
+	
+	return Params;
 }
 
